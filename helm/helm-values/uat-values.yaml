@@ -1,0 +1,34 @@
+app:
+  namespace: uat
+  image: ""
+  tag: ""
+  replicas: 3
+  imagePullSecrets: ecr-secret
+  port: 3000
+  healthCheckPath: {}
+  resources:
+    requests:
+      memory: "64Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "250m"
+ingress:
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+    nginx.ingress.kubernetes.io/server-tokens: "False"
+  host: uat-example.com
+  path: "/"
+  serviceType: ClusterIP
+
+extraEnv:
+  ENV_NAME: env
+
+volumes:
+  volumeMounts:
+    - name: tz-config
+      mountPath: /etc/localtime
+  hostPath:
+    - name: tz-config
+      path: /usr/share/zoneinfo/Asia/Bangkok

@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: efs-pv
+spec:
+  storageClassName: efs-sc
+  persistentVolumeReclaimPolicy: Retain
+  capacity:
+    storage: 5Gi # Doesn't really matter, as EFS does not enforce it anyway
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  csi:
+    driver: efs.csi.aws.com
+    volumeHandle: fs-id

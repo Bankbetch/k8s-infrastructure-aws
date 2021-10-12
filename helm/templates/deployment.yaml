@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Values.app.namespace }}
+  labels:
+    app: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.app.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}
+    spec:
+      containers:
+      - name: {{ .Release.Name }}
+        image: {{ .Values.app.image }}:{{ .Values.app.tag }}
+        imagePullPolicy: Always
+        ports:
+        - containerPort: {{ .Values.app.port }}
+          name: web-port
+          protocol: TCP
+      # volumes
+        {{- if .Values.volumes }}
+        volumeMounts:
+          {{- range .Values.volumes.volumeMounts }}
+          - name: {{ .name }}
+            mountPath: {{ .mountPath }}
+          {{- end }}
+          {{- end }}
+        {{- if .Values.app.healthCheckPath }}
+        livenessProbe:
+          httpGet:
+            path: {{ .Values.app.healthCheckPath }}
+            port: {{ .Values.app.port }}
+            scheme: HTTP
+        readinessProbe:
+          httpGet:
+            path: {{ .Values.app.healthCheckPath }}
+            port: {{ .Values.app.port }}
+            scheme: HTTP
+        {{- end }}
+        {{- if .Values.extraEnv }}
+        env:
+        {{- range $key, $value := .Values.extraEnv }}
+        - name: {{ $key }}
+          value: {{ $value | quote }}
+        {{- end }}
+        {{- end }}
+        resources:
+{{ toYaml .Values.app.resources | indent 10 }}
+      imagePullSecrets:
+      - name: {{ .Values.app.imagePullSecrets }}
+      {{- if .Values.volumes }}
+      volumes:
+      {{- range .Values.volumes.pvc }}
+        - name: {{ .volumeName }}
+          persistentVolumeClaim:
+            claimName: {{ .claimName }}
+        {{- end }}
+        {{- range .Values.volumes.hostPath }}
+        - name: {{ .name }}
+          hostPath:
+            path: {{ .path }}
+        {{- end }}
+      {{- end }}
